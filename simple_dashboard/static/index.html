@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberGuard IDS - Hybrid Intrusion Detection Dashboard</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- ── Sidebar Navigation ───────────────────────────────────────────── -->
+        <aside class="app-sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-shield-halved brand-icon"></i>
+                <div class="brand-text">
+                    <h1>CYBERGUARD</h1>
+                    <span>HYBRID IDS v2.0</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <button class="menu-item active" data-tab="online">
+                    <i class="fa-solid fa-tower-broadcast"></i>
+                    <span>Online Monitor</span>
+                </button>
+                <button class="menu-item" data-tab="offline">
+                    <i class="fa-solid fa-file-shield"></i>
+                    <span>Offline Triage</span>
+                </button>
+            </nav>
+            
+            <div class="sidebar-status">
+                <div class="status-indicator-box">
+                    <span class="status-dot green" id="global-status-dot"></span>
+                    <span id="global-status-text">Sniffer Idle</span>
+                </div>
+                <div class="status-meta">
+                    <p>Mode: <span id="current-mode">Idle</span></p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── Main Workspace ──────────────────────────────────────────────── -->
+        <main class="app-workspace">
+            <!-- ── Top Header ── -->
+            <header class="workspace-header">
+                <div class="header-title">
+                    <h2 id="page-title">Real-Time Sniffing Dashboard</h2>
+                    <p id="page-subtitle">30-Second Sliding Context Window Analysis</p>
+                </div>
+                
+                <div class="header-controls">
+                    <div class="time-widget">
+                        <i class="fa-solid fa-clock"></i>
+                        <span id="live-clock">12:00:00 PM</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- ── Tab Content: Online Mode ── -->
+            <section class="tab-content active" id="tab-online">
+                <!-- ── Stats Overview ── -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fa-solid fa-cubes"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Packets in Window</h3>
+                            <span class="stat-value" id="online-packet-count">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fa-solid fa-share-nodes"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Active Flows</h3>
+                            <span class="stat-value" id="online-flow-count">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon red">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Threat Ratio</h3>
+                            <span class="stat-value" id="online-threat-ratio">0.00%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Detected Threats</h3>
+                            <span class="stat-value" id="online-anomalies-count">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Benign Flows</h3>
+                            <span class="stat-value" id="online-benign-count">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="workspace-grid">
+                    <!-- ── Left Column: Config Panel ── -->
+                    <div class="grid-card config-panel">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-sliders"></i> Sniffer Settings</h3>
+                        </div>
+                        <form id="online-config-form" class="card-form">
+                            <div class="form-group">
+                                <label for="sniff-interface">Network Interface</label>
+                                <select id="sniff-interface" name="interface">
+                                    <option value="">Default (Auto-Detect)</option>
+                                    <option value="Ethernet">Ethernet / Local Connection</option>
+                                    <option value="Wi-Fi">Wi-Fi Wireless</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="sniff-ip">Target IP Filter (Optional)</label>
+                                <input type="text" id="sniff-ip" name="ip_filter" placeholder="e.g. 192.168.1.1">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="sniff-port">Port Filter (Optional)</label>
+                                <input type="number" id="sniff-port" name="port_filter" placeholder="e.g. 80">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="sniff-window">Sliding Window (seconds)</label>
+                                <input type="number" id="sniff-window" name="sliding_window" placeholder="e.g. 30" min="5" max="300" value="30" required>
+                            </div>
+                            
+                            <div class="form-group row checkbox-group">
+                                <input type="checkbox" id="sniff-simulated" name="simulated" checked>
+                                <label for="sniff-simulated" class="checkbox-label">
+                                    <strong>Run Traffic Simulation Fallback</strong>
+                                    <span>Generates realistic Scapy packet bursts (highly recommended if Npcap is absent).</span>
+                                </label>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary" id="btn-toggle-sniff">
+                                <i class="fa-solid fa-play"></i> Start Active Sniffing
+                            </button>
+                        </form>
+                        
+                        <!-- ── Context Window Timer ── -->
+                        <div class="timer-widget-box hidden" id="sliding-window-timer-box">
+                            <div class="timer-header">
+                                <span>Sliding Window Update Progress</span>
+                                <span id="timer-seconds">30s</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" id="timer-progress-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Right Column: Threat Log & Charts ── -->
+                    <div class="grid-card main-viz">
+                        <div class="card-header flex-header">
+                            <h3><i class="fa-solid fa-chart-line"></i> Sliding Window Threat Frequency</h3>
+                            <span class="badge blue">Sliding 30s Window</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="online-threat-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Bottom Grid: Traffic Log ── -->
+                <div class="grid-card alerts-log">
+                    <div class="card-header flex-header">
+                        <h3><i class="fa-solid fa-list-check"></i> Real-time Sliding Window Traffic Log (XGBoost + SHAP)</h3>
+                        <div class="filter-tabs" id="online-filter-tabs">
+                            <button class="filter-tab active" data-filter="all">All Traffic <span class="tab-badge grey" id="badge-on-all">0</span></button>
+                            <button class="filter-tab" data-filter="threats">Threats <span class="tab-badge red" id="badge-on-threats">0</span></button>
+                            <button class="filter-tab" data-filter="benign">Benign <span class="tab-badge green" id="badge-on-benign">0</span></button>
+                        </div>
+                    </div>
+                    <div class="alerts-table-container">
+                        <div class="alerts-empty" id="online-alerts-empty">
+                            <i class="fa-solid fa-shield-virus"></i>
+                            <p>No active flows found in current window buffer.</p>
+                        </div>
+                        <div class="alerts-list" id="online-alerts-list">
+                            <!-- Injected alerts go here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── Tab Content: Offline Mode ── -->
+            <section class="tab-content" id="tab-offline">
+                <!-- ── Drag & Drop Panel ── -->
+                <div class="grid-card file-card">
+                    <div class="upload-dropzone" id="file-dropzone">
+                        <i class="fa-solid fa-cloud-arrow-up cloud-icon"></i>
+                        <h3>Drag & drop your logs or packet capture here</h3>
+                        <p>Supports CSV, Excel (.xlsx, .xls), and Wireshark PCAPs/PCAPNGs</p>
+                        <span class="btn btn-secondary">Select File</span>
+                    </div>
+                    <input type="file" id="file-input" class="hidden" accept=".csv,.xlsx,.xls,.pcap,.pcapng">
+                    
+                    <!-- File Ingest Summary -->
+                    <div class="file-summary-box hidden" id="file-summary">
+                        <div class="file-details">
+                            <i class="fa-solid fa-file-code file-icon"></i>
+                            <div class="file-meta-text">
+                                <h4 id="summary-filename">dataset.csv</h4>
+                                <p><span id="summary-size">0.0</span> MB • <span id="summary-rows">0</span> Rows • <span id="summary-cols">0</span> Columns</p>
+                            </div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="btn btn-secondary" id="btn-reset-upload"><i class="fa-solid fa-trash-can"></i> Clear</button>
+                            <button class="btn btn-primary" id="btn-start-analyze"><i class="fa-solid fa-bolt"></i> Start Detection</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Analysis Preprocessing / Progress ── -->
+                <div class="grid-card progress-card hidden" id="analysis-progress-box">
+                    <div class="progress-step-box">
+                        <div class="step-header">
+                            <span><i class="fa-solid fa-gears"></i> Preprocessing Data Matrix...</span>
+                            <span id="preprocess-pct">0%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill blue" id="preprocess-progress-fill"></div>
+                        </div>
+                    </div>
+                    <div class="progress-step-box">
+                        <div class="step-header">
+                            <span><i class="fa-solid fa-brain"></i> XGBoost Hybrid Model Inference...</span>
+                            <span id="predict-pct">0%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill green" id="predict-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Offline Analysis Dashboard ── -->
+                <div class="offline-dashboard hidden" id="offline-dashboard">
+                    <!-- 📊 Model Metrics / General Summary -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon blue">
+                                <i class="fa-solid fa-database"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Total Flows</h3>
+                                <span class="stat-value" id="off-stat-flows">0</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon red">
+                                <i class="fa-solid fa-radiation"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Threat Count</h3>
+                                <span class="stat-value" id="off-stat-threats">0</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon orange">
+                                <i class="fa-solid fa-percent"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Threat Percentage</h3>
+                                <span class="stat-value" id="off-stat-ratio">0.00%</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon green">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Benign Flows</h3>
+                                <span class="stat-value" id="off-stat-benign">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Label validation summary (if ground truth labels are found) -->
+                    <div class="grid-card labels-evaluation hidden" id="labels-eval-card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-graduation-cap"></i> Validation Metrics (vs. Uploaded Ground Truth Labels)</h3>
+                        </div>
+                        <div class="metrics-flex-box">
+                            <div class="metric-circle-item">
+                                <div class="metric-circle" id="metric-acc-circle">0%</div>
+                                <span>Accuracy</span>
+                            </div>
+                            <div class="metric-circle-item">
+                                <div class="metric-circle" id="metric-prec-circle">0%</div>
+                                <span>Precision</span>
+                            </div>
+                            <div class="metric-circle-item">
+                                <div class="metric-circle" id="metric-rec-circle">0%</div>
+                                <span>Recall</span>
+                            </div>
+                            <div class="metric-circle-item">
+                                <div class="metric-circle" id="metric-f1-circle">0%</div>
+                                <span>F1-Score</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 📊 Offline Analysis Visualizations -->
+                    <div class="workspace-grid" style="grid-template-columns: 1.8fr 1.2fr; margin-bottom: 2rem;">
+                        <!-- Left Column: Classifications Ingest Timeline -->
+                        <div class="grid-card main-viz">
+                            <div class="card-header flex-header">
+                                <h3><i class="fa-solid fa-chart-line"></i> Classifications Ingest Timeline</h3>
+                                <span class="badge blue">Dataset Slices</span>
+                            </div>
+                            <div class="chart-container" style="height: 250px; position: relative;">
+                                <canvas id="offline-threat-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Protocol and Attack Breakdown stacked -->
+                        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                            <div class="grid-card" style="padding: 1.2rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                                <div class="card-header" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem;">
+                                    <h3 style="font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-chart-pie" style="color: var(--cyber-cyan);"></i> Protocol Share</h3>
+                                </div>
+                                <div class="chart-container" style="height: 120px; position: relative;">
+                                    <canvas id="offline-protocol-chart"></canvas>
+                                </div>
+                            </div>
+                            
+                            <div class="grid-card" style="padding: 1.2rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                                <div class="card-header" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem;">
+                                    <h3 style="font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-chart-bar" style="color: var(--cyber-cyan);"></i> Attack Types</h3>
+                                </div>
+                                <div class="chart-container" style="height: 120px; position: relative;">
+                                    <canvas id="offline-attack-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Offline Detections Preview -->
+                    <div class="grid-card alerts-log">
+                        <div class="card-header flex-header">
+                            <h3><i class="fa-solid fa-shield-virus"></i> Flow Detections Preview (SHAP Mapped)</h3>
+                            <div class="filter-tabs" id="offline-filter-tabs">
+                                <button class="filter-tab active" data-filter="all">All Traffic <span class="tab-badge grey" id="badge-off-all">0</span></button>
+                                <button class="filter-tab" data-filter="threats">Threats <span class="tab-badge red" id="badge-off-threats">0</span></button>
+                                <button class="filter-tab" data-filter="benign">Benign <span class="tab-badge green" id="badge-off-benign">0</span></button>
+                            </div>
+                        </div>
+                        <div class="alerts-list" id="offline-alerts-list">
+                            <!-- Injected rows -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Area on File Upload -->
+                <div class="grid-card preview-card" id="file-preview-card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-table-list"></i> Upload Preview (Top 10 Flows)</h3>
+                    </div>
+                    <div class="table-container" id="preview-table-container">
+                        <div class="table-empty">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <p>Upload a CSV or Excel dataset to view the raw packet preview.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ── SHAP Modal Details ── -->
+    <div class="modal-backdrop hidden" id="shap-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-chart-bar"></i> SHAP Local Explanation (Feature Contribution)</h3>
+                <button class="btn-close-modal" id="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="shap-summary">
+                    <h4 id="shap-threat-type">Port Scan / Recon</h4>
+                    <p>Calculates the absolute Shapley contribution values for this specific classification.</p>
+                </div>
+                <div class="shap-chart-holder">
+                    <!-- SHAP bars injected dynamically -->
+                    <div class="shap-bars" id="shap-bars-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/app.js"></script>
+</body>
+</html>

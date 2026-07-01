@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-cyber-dark text-gray-200 font-sans overflow-x-hidden;
+    background-image: 
+      radial-gradient(at 50% 0%, rgba(6, 182, 212, 0.05) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(16, 185, 129, 0.03) 0px, transparent 50%);
+  }
+
+  /* Custom Glowing Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-cyber-dark;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-800 rounded-full hover:bg-cyber-cyan transition-all duration-300;
+    box-shadow: 0 0 5px rgba(6, 182, 212, 0.2);
+  }
+}
+
+/* Cybersecurity Glowing animations */
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+.animate-scanline {
+  animation: scanline 8s linear infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.2;
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.1);
+  }
+  50% {
+    opacity: 0.5;
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s infinite ease-in-out;
+}
+
+/* Background Cyber Grid */
+.cyber-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(31, 41, 55, 0.2) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(31, 41, 55, 0.2) 1px, transparent 1px);
+}
