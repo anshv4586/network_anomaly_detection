@@ -18,10 +18,10 @@ pip install -r requirements.txt
 
 ### 2. Download the CTU-13 dataset
 
-Place both CSVs in `sample_logs/`:
+Place both CSVs in `data/ctu13/`:
 
 ```
-sample_logs/
+data/ctu13/
 ├── CTU13_Attack_Traffic.csv    # 38,898 botnet flows
 └── CTU13_Normal_Traffic.csv    # 53,314 benign campus flows
 ```
@@ -32,23 +32,23 @@ Download source: [imfaisalmalik/CTU13-CSV-Dataset](https://github.com/imfaisalma
 
 ```bash
 # Main detector — 10-feature Isolation Forest on CTU-13 (6K rows each)
-python run_ctu13.py
+python research/run_ctu13.py
 
 # All-features version — all CICFlowMeter columns + log1p transform
-python run_ctu13_v2.py
+python research/run_ctu13_v2.py
 
 # Attack vs Normal comparison — 20K rows each, Cohen's d, ROC, PR, threshold sweep
-python compare_datasets.py
+python research/compare_datasets.py
 
 # Isolation Forest explainability walkthrough (tiny 13-point dataset)
-python explain_isolation_forest.py
+python research/explain_isolation_forest.py
 
 # SecureAI Agent — GPT-4o tool-calling loop over the detector (requires OpenAI key)
 export OPENAI_API_KEY=sk-...
-python agent.py
+python agent/agent.py
 ```
 
-All graphs are saved to the `graphs/` folder.
+All graphs are saved to the `docs/graphs/` folder.
 
 ---
 
@@ -106,29 +106,40 @@ very quickly, earning a low (anomalous) score.
 
 ```
 anamoly_detection/
-│
-├── run_ctu13.py               ← Main detector  (10 features, 6K rows per class)
-├── run_ctu13_v2.py            ← All-features version (all CICFlowMeter columns)
-├── compare_datasets.py        ← Attack vs Normal comparison (20K rows each)
-├── explain_isolation_forest.py← Step-by-step IF explainability on toy data
-│
-├── agent.py                   ← SecureAI Agent (OpenAI tool-calling loop)
-├── cve_db.py                  ← CVE + MITRE ATT&CK knowledge base
-│
-├── sample_logs/
-│   ├── CTU13_Attack_Traffic.csv
-│   └── CTU13_Normal_Traffic.csv
-│
-├── graphs/                    ← All output PNGs saved here
-│   ├── anomaly_report_ctu13.png
-│   ├── ctu13_all_features.png
-│   ├── ctu13_comparison.png
-│   └── isolation_forest_explained.png
-│
-├── requirements.txt
-├── RESEARCH.md                ← 4 research directions to elevate this project
-├── PROGRESS.md                ← Experiment log and next steps
-└── paper.md                   ← Draft paper / write-up
+├── project/              # Aegis-IDS production FastAPI backend + React frontend
+├── data/                 # Consolidated datasets
+│   ├── ctu13/            # CTU-13 CSV flow datasets and logs
+│   └── nsl_kdd/          # NSL-KDD Train and Test text datasets
+├── research/             # Experimental, benchmarking, and explanation scripts
+│   ├── compare_algorithms.py
+│   ├── compare_datasets.py
+│   ├── explain_isolation_forest.py
+│   ├── run_ctu13.py
+│   ├── run_ctu13_v2.py
+│   ├── run_rigorous_hybrid.py
+│   └── run_nsl_kdd.py
+├── agent/                # SecureAI GPT-4o advisor agent
+│   ├── agent.py
+│   ├── cve_db.py
+│   └── anomaly_detector_v2.py
+├── simple_dashboard/     # Standalone lightweight dashboard
+│   ├── server.py
+│   ├── ml_pipeline.py
+│   └── static/           # Static frontend files (index.html, style.css, app.js)
+├── docs/                 # Academic papers, research notes, and output figures
+│   ├── paper.md
+│   ├── hybrid_system_paper.md
+│   ├── leakage_report.md
+│   ├── RESEARCH.md
+│   ├── PROGRESS.md
+│   └── graphs/           # Model output charts and visualization PNGs
+├── results/              # Model run metrics, csv reports, and evaluation results
+│   ├── evaluation_metrics.csv
+│   ├── evaluation_metrics_v2.csv
+│   ├── test_traffic.csv
+│   └── nsl_kdd_evaluation_metrics.csv
+├── requirements.txt      # Project Python requirements
+└── README.md             # This file
 ```
 
 ---
